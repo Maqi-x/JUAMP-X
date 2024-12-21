@@ -6,10 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 	"time"
+	"golang.org/x/term"
 	"unicode/utf8"
-	"unsafe"
 )
 
 var RTitle bool
