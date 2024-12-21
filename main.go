@@ -57,6 +57,13 @@ func termCheck() {
 	cleanT()
 	for {
 		w, h := getTerminalSize()
+		if w == 0 && h == 0 {
+		    m := mb.NewErrorBox("Wygląda na to że wczytanie rozmiaru terminala się nie powiodło, czy aby napewno chcesz kontynuować? mogą występować różne problemu graficzne, zalecamy skorzystać z innego terminala jeśli to rozwiązuje sproblem. jeśli tak naciśnij \"Ok\"")
+		    m.Show()
+		    m.Hide()
+		    clearT()
+		    return
+		}
 		if w < 125 || h < 30 {
 			m := mb.NewErrorBox(fmt.Sprintf("Aby uzyskać najlepsze wrażenia z gry prosimy zwiększyć rozmiar terminala, zapewni to lepszy wygląd oraz brak błędów graficznych. aktualnie ustawiłeś terminal na %d szerokości i %d wysokości, gdzie zalecany rozmiar to 125x30. Jeśli możesz zwiększ trochę terminal", w, h))
 			m.Show()
