@@ -31,3 +31,7 @@ go.work.sum
 .idea/
 saves/
 jmp
+binaries.tar.gz
+JUAMP-X Windows
+JUAMP-X Linux
+bin/

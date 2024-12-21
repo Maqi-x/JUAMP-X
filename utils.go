@@ -6,9 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 	"unicode/utf8"
-	"golang.org/x/term"
+	"unsafe"
 )
 
 var RTitle bool
@@ -21,11 +22,14 @@ func chm(title string) {
 }
 
 func getTerminalSize() (width int, height int) {
-    width, height, err := term.GetSize(int(os.Stdout.Fd()))
-    if err != nil {
-        return 0, 0
-    }
-    return width, height
+	var ws struct {
+		Row    uint16
+		Col    uint16
+		Xpixel uint16
+		Ypixel uint16
+	}
+	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&ws)))
+	return int(ws.Col), int(ws.Row)
 }
 
 func clearT() {
