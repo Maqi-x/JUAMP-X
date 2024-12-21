@@ -18,9 +18,25 @@ func main() {
 		Println("wystąpił błąd podczas ładowania save:" + err.Error())
 		Println("Zostaną wczytane domyślne wartości")
 	}
+	go func() {
+		for {
+			if !started {
+				time.Sleep(10 * sec)
+				continue
+			}
+			if autosave != -1 {
+				saveSave(save)
+				time.Sleep(time.Duration(autosave) * time.Millisecond)
+			} else {
+				time.Sleep(10 * sec)
+				continue
+			}
+		}
+	}()
 	switch exitCode {
 	case 0:
 		Println("Pomyślnie załadowano save!")
+		started = true
 		goTo(PLACE)
 	case 1:
 		Println("Pomyślnie utworzono nowy save!")
@@ -58,11 +74,11 @@ func termCheck() {
 	for {
 		w, h := getTerminalSize()
 		if w == 0 && h == 0 {
-		    m := mb.NewErrorBox("Wygląda na to że wczytanie rozmiaru terminala się nie powiodło, czy aby napewno chcesz kontynuować? mogą występować różne problemu graficzne, zalecamy skorzystać z innego terminala jeśli to rozwiązuje sproblem. jeśli tak naciśnij \"Ok\"")
-		    m.Show()
-		    m.Hide()
-		    clearT()
-		    return
+			m := mb.NewErrorBox("Wygląda na to że wczytanie rozmiaru terminala się nie powiodło, czy aby napewno chcesz kontynuować? mogą występować różne problemu graficzne, zalecamy skorzystać z innego terminala jeśli to rozwiązuje sproblem. jeśli tak naciśnij \"Ok\"")
+			m.Show()
+			m.Hide()
+			clearT()
+			return
 		}
 		if w < 125 || h < 30 {
 			m := mb.NewErrorBox(fmt.Sprintf("Aby uzyskać najlepsze wrażenia z gry prosimy zwiększyć rozmiar terminala, zapewni to lepszy wygląd oraz brak błędów graficznych. aktualnie ustawiłeś terminal na %d szerokości i %d wysokości, gdzie zalecany rozmiar to 125x30. Jeśli możesz zwiększ trochę terminal", w, h))
@@ -98,12 +114,12 @@ func start() {
 	Println("Wylosowałeś miasto: " + TOWN)
 	for _, line := range strings.Split(t[1], "\n") {
 		PrintC(line)
-		time.Sleep(30 * ms)
 	}
 
 	Println("")
 	Println("A więc dobrze, zaczynajmy!")
-	loading(3, "Podróż do lobby")
+	loading(4, "Podróż do lobby")
 	saveSave(save)
+	started = true
 	goTo("LOBBY")
 }
