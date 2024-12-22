@@ -2,14 +2,13 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"golang.org/x/term"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -54,7 +53,15 @@ func renderTitle(title string) {
 
 	fTitle := fmt.Sprintf("%s %s %s", strings.Repeat("#", padding), title, strings.Repeat("#", padding))
 	fmt.Printf("\033[%d;1H%s\n%s\n\033[%d;1H%s\n\033[%d;1H%s\n",
-		height-3, fmt.Sprintf("Stan konta - portfel: %d, bank: %d", wallet, bank), border,
+		height-3, fmt.Sprintf("Stan konta - portfel: %.2f, bank: %.2f; Głód: %d%s", wallet, bank, hungry, func() string {
+			if hungry < 10 {
+				return ", jesteś BARDZO GŁODNY"
+			} else if hungry < 20 {
+				return ", jesteś głodny"
+			} else {
+				return ""
+			}
+		}()), border,
 		height-1, fTitle,
 		height, border)
 }
@@ -181,10 +188,11 @@ func lenr(txt string) int {
 }
 
 func goTo(place string) {
+	history = append(history, place)
 	switch place {
-	case "LOBBY":
-		PLACE = "LOBBY"
-		chm("LOBBY")
+	case "DOM":
+		PLACE = "DOM"
+		chm("DOM")
 		handleLobby()
 	case "ROPUCHA":
 		PLACE = "ROPUCHA"
@@ -194,12 +202,25 @@ func goTo(place string) {
 		PLACE = "CONFIG"
 		chm("CONFIG")
 		handleConfig()
+	case "DWÓR":
+		PLACE = "DWÓR"
+		chm("DWÓR")
+		HandleOutside()
+	case "BANK":
+		PLACE = "BANK"
+		chm("BANK")
+		handleBank()
 	default:
 		Println("Nieznana lokalizacja")
 		Println("Wygląda na to, że save nie był poprawny! Nie powinno się ręcznie modefikować plików save!")
-		loading(3, "Podróż do lobby")
-		goTo("LOBBY")
+		loading(3, "Podróż do domu")
+		goTo("DOM")
 	}
+}
+
+func Back() {
+	goTo(history[len(history)-2])
+	history = history[:len(history)-1]
 }
 
 func Sprintf(format string, a ...interface{}) string {
@@ -220,34 +241,45 @@ func Exit(code ...int) {
 	os.Exit(0)
 }
 
-func normTime(timeStr string) (int, error) {
-	multiplier := 1
+func Tell(person string, txt string) {
+	Println(Sprintf("[ %s ]: %s", person, txt))
+}
 
-	// Obsługa suffixów
-	switch {
-	case strings.HasSuffix(timeStr, "ms"):
-		timeStr = strings.TrimSuffix(timeStr, "ms")
-		multiplier = 1
-	case strings.HasSuffix(timeStr, "s"):
-		timeStr = strings.TrimSuffix(timeStr, "s")
-		multiplier = 1000
-	case strings.HasSuffix(timeStr, "sec"):
-		timeStr = strings.TrimSuffix(timeStr, "sec")
-		multiplier = 1000
-	case strings.HasSuffix(timeStr, "min"):
-		timeStr = strings.TrimSuffix(timeStr, "min")
-		multiplier = 60 * 1000
-	case strings.HasSuffix(timeStr, "h"):
-		timeStr = strings.TrimSuffix(timeStr, "h")
-		multiplier = 60 * 60 * 1000
-	default:
-		return 0, errors.New("nie poprawny format czasu")
+func PrintLine(txt string) {
+	txt = Sprintf(" %s ", txt)
+	w, _ := getTerminalSize()
+	w = (w - lenr(txt)) / 2
+	Println(strings.Repeat("-", w) + txt + strings.Repeat("-", w))
+}
+
+func Sep() {
+	w, _ := getTerminalSize()
+	Println(strings.Repeat("-", w))
+}
+
+func normStr(str string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsSpace(r) {
+			return unicode.ToLower(r)
+		}
+		return -1
+	}, str)
+}
+
+func hungryAdd(num int) {
+	hungry += num
+	if hungry > 100 {
+		hungry = 100
 	}
+}
 
-	value, err := strconv.Atoi(strings.TrimSpace(timeStr))
-	if err != nil {
-		return 0, errors.New("Podany tekst to nie liczba")
+func Talk(msgs [][2]string, colors map[string]string) {
+	for _, msg := range msgs {
+		Println(Sprintf("\r\033[1m%s[ %s ]:\033[0m %s%s\033[0m",
+			colorCodes[colors[msg[0]]], msg[0], colorCodes[colors[msg[0]]], msg[1],
+		))
+		r := bufio.NewReader(os.Stdin)
+		Print("\033[30;47mDalej >\033[0m")
+		r.ReadString('\n')
 	}
-
-	return value * multiplier, nil
 }

@@ -16,8 +16,8 @@ func loadSave(name string) (int, error) {
 	}
 
 	type Money struct {
-		Wallet int64 `toml:"wallet"`
-		Bank   int64 `toml:"bank"`
+		Wallet float64 `toml:"wallet"`
+		Bank   float64 `toml:"bank"`
 	}
 
 	type SaveData struct {
@@ -28,7 +28,7 @@ func loadSave(name string) (int, error) {
 	defaultSave := SaveData{
 		Player: Player{
 			Hungry: 100,
-			Place:  "LOBBY",
+			Place:  "DOM",
 			Town:   "_",
 			Name:   "_",
 		},
@@ -148,8 +148,8 @@ town = "%s"
 name = "%s"
 
 [money]
-wallet = %d
-bank = %d
+wallet = %.2f
+bank = %.2f
 `, hungry, PLACE, TOWN, NAME, wallet, bank)
 
 	_, err = file.WriteString(content)

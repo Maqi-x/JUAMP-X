@@ -1,79 +1,104 @@
 package main
 
 import (
-	"os"
+	"fmt"
 	"strings"
 )
 
+func formatStep(step []int) string {
+	return strings.Trim(strings.Replace(fmt.Sprint(step), " ", ",", -1), "[]")
+}
+
 func handleLobby() {
-	Println("Witaj! gdzie checsz sie udać?")
-	PrintC("1. Ropucha")
+	o := Prompt("Rozpocznie się samouczek, jeśli chcesz go pominąć wpisz \"skip\", inaczej poprostu naciśnij enter")
+	if o == "skip" {
+		first = true
+	}
+	if !first {
+		switch formatStep(tutStep) {
+		case "1,0":
+			PrintLine("Samouczek")
+			Talk([][2]string{
+				{"Mama", "Cześć, czy możesz mi pomóc?"},
+				{"Ty", "Jasne, o co chodzi?"},
+				{"Mama", "Dziękuje! jeśli możesz, skocz do sklepu i kup gazetę"},
+			}, map[string]string{
+				"Mama": "yellow",
+				"Ty":   "green",
+			})
+			PrintClr("\033[1mPorada:", "blue")
+			PrintClr("Udaj się na dwór, tam znajduje się mały sklepik w którym możesz zakupić gazety", "blue")
+			tutStep = []int{1, 1}
+		case "1,1", "1,2", "1,3":
+			Talk([][2]string{
+				{"Mama", "Halo, gdzie te zakupy?"},
+				{"Ty", func() string {
+					Print("Odpowiedz dlaczego nie kupiłeś gazety!!")
+					PrintC("1. Tak, zaraz to zrobię, mamo...")
+					PrintC("2. Przepraszam, ale nie mogę")
+					for {
+						inp := Prompt(">>> ")
+						if inp == "1" {
+							return "Tak, zaraz to zrobię, mamo..."
+						} else if inp == "2" {
+							return "Przepraszam, ale nie mogę"
+						} else {
+							Println("Niepoprawna opcja")
+							continue
+						}
+					}
+				}()},
+			}, map[string]string{
+				"Mama": "yellow",
+				"Ty":   "green",
+			})
+		case "2,0":
+			Tell("\033[1;33mMama\033[0;0m", Sprintf("%sDziękuje! a i jeszcze jedno, czy możesz wpłacić te pieniądze do banku?\033[0;0m", colorCodes["yellow"]))
+			PrintC("\033[1;32mDodano 100zł\033[0m   ")
+			bankAdd(100)
+			PrintClr("\033[1mPorada:", "blue")
+			PrintClr("Udaj się na dwór, tam znajduje się bank - w którym możesz wpłacić pieniądze", "blue")
+		}
+	}
+	Println("Co chcesz teraz zrobić?")
+	PrintC("1. wyjdź na dwór")
 	PrintC("2. Konfiguracja")
 	PrintC("3. Wyjdź z gry")
 	inp := Prompt(">>> ")
 	switch inp {
 	case "1":
-		goTo("ROPUCHA")
+		goTo("DWÓR")
 	case "2":
 		goTo("CONFIG")
 	case "3":
 		Exit()
+	default:
+		PrintClr("Error!", "orange")
+		PrintClr("Nieznana opcja", "red")
 	}
 }
 
-func handleConfig() {
-	w, _ := getTerminalSize()
-	w = (w - lenr("Konfiguracja")) / 2
-	Println(strings.Repeat("-", w) + "Konfiguracja" + strings.Repeat("-", w))
+func HandleOutside() {
+	Println("Piękny zapach świeżego powietrza nie prawdasz?")
 	for {
-		PrintC("1. Zmienianie nazwy")
-		PrintC("2. Ustawienia AutoSave")
-		PrintC("3. Usuń save")
-		PrintC("4. Zapisz ustawienia")
-		PrintC("5. Powrót do lobby")
+		PrintC("1. Udaj się do małego sklepu \"Ropucha\"")
+		PrintC("2. Zagadaj do kogoś")
+		PrintC("3. Zajdź do banku")
+		PrintC("4. Powrót do domu")
 		inp := Prompt(">>> ")
-		Println("")
 		switch inp {
 		case "1":
-			Println("Wpisz nową nazwe")
-			NAME = Prompt(">>> ")
-			PrintClr("Pomyślnie zapisano!", "green")
+			goTo("ROPUCHA")
 		case "2":
-			func() {
-				Println("Autosave: podaj czas co jaki AutoSave ma działać, np. 1h, 20m, 10s, 1m")
-				PrintC("Jeśli chcesz wyłączyć AutoSave wpisz -1 lub 0")
-				tm := Prompt(">>> ")
-				if tm == "-1" || tm == "0" {
-					autosave = -1
-				} else {
-					tmp, err := normTime(tm)
-					if err != nil {
-						PrintClr("Error!", "orange")
-						PrintClr(err.Error(), "red")
-						Println("")
-						Println("ustawienia nie zostaną zastosowane")
-						return
-					}
-					autosave = tmp
-					PrintClr("Pomyślnie zapisano ustawienia!", "green")
-				}
-			}()
+			// not inplemented
 		case "3":
-			err := os.Remove(Sprintf("saves/%s.toml", save))
-			if err != nil {
-				PrintClr("Error!", "orange")
-				PrintClr("Błąd podczas usuwania save:"+err.Error(), "red")
-			} else {
-				PrintClr("Plik został pomyślnie usunięty", "green")
-			}
+			goTo("BANK")
 		case "4":
-			saveSave(save)
-			PrintClr("Pomyślnie zapisano ustawienia!", "green")
-		case "5":
-			goTo("LOBBY")
+			goTo("DOM")
 		default:
 			PrintClr("Error!", "orange")
-			Println("Nieznana opcja")
+			PrintClr("Nieznana opcja", "red")
+			continue
 		}
 	}
 }

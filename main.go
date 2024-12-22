@@ -3,6 +3,7 @@ package main
 import (
 	mb "Mqio/MessageBoxes"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -18,6 +19,7 @@ func main() {
 		Println("wystąpił błąd podczas ładowania save:" + err.Error())
 		Println("Zostaną wczytane domyślne wartości")
 	}
+	// ----------------------------------------------------- AutoSave --------------------------------------------------------- \\
 	go func() {
 		for {
 			if !started {
@@ -33,6 +35,46 @@ func main() {
 			}
 		}
 	}()
+	// ----------------------------------------------------- HungrySystem --------------------------------------------------------- \\
+	go func() {
+		var o, o1 bool
+		for {
+			if !started {
+				time.Sleep(10 * sec)
+				continue
+			}
+			if !(hungry < 0) {
+				hungry--
+			}
+			time.Sleep(4500 * ms)
+			if hungry < 20 && !o {
+				PrintClr("Uwaga!", "orange")
+				PrintClr("Jesteś głodny! udaj się jak najszybciej coś zjeść", "red")
+				o = true
+			} else if hungry < 10 && !o1 {
+				PrintClr("UWAGA!", "orange")
+				PrintClr("Jesteś BARDZO GŁODNY! udaj się jak najszybciej coś zjeść!", "red")
+				o1 = true
+			} else if hungry <= 0 {
+				started = false
+				err := os.Remove(Sprintf("saves/%s.toml", save))
+				if err != nil {
+					PrintClr("Error!", "orange")
+					PrintClr(err.Error(), "red")
+				}
+				clearT()
+				PLACE = "END"
+				chm(PLACE)
+				PrintC(colorCodes["red"] + "Koniec..." + colorCodes["reset"])
+				PrintC(colorCodes["orange"] + "Dziękujemy za gre w JUAMP X!")
+				PrintC("niestety, z powodu głodu nie przerzyłeś")
+				PrintC("Jeśli chcesz kontynuować przygodę utwórz nowego save" + colorCodes["reset"])
+				loading(5, "Koniec gry")
+				os.Exit(0)
+			}
+		}
+	}()
+	// --------------------------------------------------------------------------------------------------------------------------- \\
 	switch exitCode {
 	case 0:
 		Println("Pomyślnie załadowano save!")
@@ -117,9 +159,12 @@ func start() {
 	}
 
 	Println("")
+	time.Sleep(1 * sec)
+	Prompt("Naciśnij enter po przeczytaniu")
 	Println("A więc dobrze, zaczynajmy!")
-	loading(4, "Podróż do lobby")
+	loading(2, "Podróż do domu")
 	saveSave(save)
 	started = true
-	goTo("LOBBY")
+	first = false
+	goTo("DOM")
 }
