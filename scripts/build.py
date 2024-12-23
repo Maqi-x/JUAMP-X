@@ -50,6 +50,9 @@ def check():
             os.exit(250)
             pass
         pass
+    except FileNotFoundError:
+        erro("Error: Go is not installed or not in PATH. Please install Go and try again")
+        os.exit(269)
     except sp.CalledProcessError as err:
         erro(f"Error: command failed! Make sure Go is installed and in $PATH (error code: {err})")
         os.exit(561)

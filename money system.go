@@ -56,7 +56,7 @@ func cPay(price float64) bool {
 }
 
 func handleBank() {
-	Talk([][2]string{
+	Talk([][2]interface{}{
 		{"Bankier", "Witaj w banku!"},
 		{"Bankier", "Co chcesz zrobić? wypłacić/wpłacic pieniądze, a może coś innego?"},
 		{"Ty", "Hm..."},
@@ -98,6 +98,11 @@ func handleBank() {
 				continue
 			}
 			Println("Pomyślnie wpłacono kwote " + strconv.Itoa(x) + "zł do banku")
+			if x >= 200 {
+				if tutStep[0] == 2 {
+					tutStep = []int{3, 0}
+				}
+			}
 		} else if inp == "help" {
 			help()
 		} else if inp == "exit" {

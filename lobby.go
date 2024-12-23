@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 func formatStep(step []int) string {
@@ -10,15 +11,19 @@ func formatStep(step []int) string {
 }
 
 func handleLobby() {
-	o := Prompt("Rozpocznie się samouczek, jeśli chcesz go pominąć wpisz \"skip\", inaczej poprostu naciśnij enter")
-	if o == "skip" {
-		first = true
+	if !first && tutStep[0] == 1 {
+		o := Prompt("Rozpocznie się samouczek, jeśli chcesz go pominąć wpisz \"skip\", inaczej poprostu naciśnij enter")
+		if o == "skip" {
+			first = true
+		}
 	}
 	if !first {
+		PrintLine("Samouczek")
+		//Println(Sprintf("DEBUG: %v", tutStep))
+		//Println(Sprintf("DEBUG: %s", formatStep(tutStep)))
 		switch formatStep(tutStep) {
 		case "1,0":
-			PrintLine("Samouczek")
-			Talk([][2]string{
+			Talk([][2]interface{}{
 				{"Mama", "Cześć, czy możesz mi pomóc?"},
 				{"Ty", "Jasne, o co chodzi?"},
 				{"Mama", "Dziękuje! jeśli możesz, skocz do sklepu i kup gazetę"},
@@ -30,7 +35,7 @@ func handleLobby() {
 			PrintClr("Udaj się na dwór, tam znajduje się mały sklepik w którym możesz zakupić gazety", "blue")
 			tutStep = []int{1, 1}
 		case "1,1", "1,2", "1,3":
-			Talk([][2]string{
+			Talk([][2]interface{}{
 				{"Mama", "Halo, gdzie te zakupy?"},
 				{"Ty", func() string {
 					Print("Odpowiedz dlaczego nie kupiłeś gazety!!")
@@ -47,18 +52,54 @@ func handleLobby() {
 							continue
 						}
 					}
-				}()},
+				}},
 			}, map[string]string{
 				"Mama": "yellow",
 				"Ty":   "green",
 			})
 		case "2,0":
+			time.Sleep(100 * ms)
 			Tell("\033[1;33mMama\033[0;0m", Sprintf("%sDziękuje! a i jeszcze jedno, czy możesz wpłacić te pieniądze do banku?\033[0;0m", colorCodes["yellow"]))
-			PrintC("\033[1;32mDodano 100zł\033[0m   ")
-			bankAdd(100)
+			time.Sleep(1000 * ms)
+			Println("\033[1;32m+ Dodano 200zł\033[0m")
+			walletAdd(200)
 			PrintClr("\033[1mPorada:", "blue")
 			PrintClr("Udaj się na dwór, tam znajduje się bank - w którym możesz wpłacić pieniądze", "blue")
+		case "2,1", "2,2", "2,3":
+			Talk([][2]interface{}{
+				{"Mama", "Halo? dlaczego nie wpłaciłeś tych pierzonych pieniędzy??"},
+				{"Ty", func() string {
+					Print("Odpowiedz, dlaczego nie wykonałeś zadania!")
+					PrintC("1. Tak, zaraz to zrobię, mamo...")
+					PrintC("2. Przepraszam, ale nie mogę")
+					for {
+						inp := Prompt(">>> ")
+						if inp == "1" {
+							return "Tak, zaraz to zrobię, mamo..."
+						} else if inp == "2" {
+							return "Przepraszam, ale nie mogę"
+						} else {
+							Println("Niepoprawna opcja")
+							continue
+						}
+					}
+				}},
+			}, map[string]string{
+				"Mama": "yellow",
+				"Ty":   "green",
+			})
+		case "3,0":
+			Talk([][2]interface{}{
+				{"Mama", "Dzięki, to już wszystko!"},
+				{"Mama", "Teraz masz czas wolny"},
+				{"Ty", "ok"}, // TODO: zmień to gówno
+			}, map[string]string{
+				"Mama": "yellow",
+				"Ty":   "green",
+			})
+			first = true
 		}
+		Sep()
 	}
 	Println("Co chcesz teraz zrobić?")
 	PrintC("1. wyjdź na dwór")

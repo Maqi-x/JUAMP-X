@@ -61,11 +61,11 @@ func handleRopucha() {
 				continue
 			}
 			if key == "gazeta" {
-				v.Description = Sprintf(v.Description, NAME)
+				v.Description = Sprintf(v.Description, TOWN)
 			}
-			Println(Sprintf("Info o przedmiocie: %s", key))
-			Println(Sprintf("Opis: %s", v.Description))
-			Println(Sprintf("Cena: %.2f", v.Price))
+			PrintClr(Sprintf("Info o przedmiocie: %s", key), "cyan")
+			PrintClr(Sprintf("Opis: %s", v.Description), "cyan")
+			PrintClr(Sprintf("Cena: %.2f", v.Price), "cyan")
 		} else if strings.HasPrefix(inp, "buy") {
 			if len(inp) < 5 {
 				Println("Podaj prawidłową nazwę przedmiotu po komendzie `buy`")
@@ -105,9 +105,13 @@ func buy(name string) {
 	case "bułka":
 		hungryAdd(20)
 		loading(2, "Jedzienie")
+		chm("ROPUCHA")
+		time.Sleep(500 * ms)
 	case "pizza":
 		hungryAdd(40)
 		loading(3, "Jedzienie")
+		chm("ROPUCHA")
+		time.Sleep(500 * ms)
 	case "gazeta":
 		Sep()
 		Println("Gazeta:")
@@ -115,8 +119,9 @@ func buy(name string) {
 			Println(line)
 			time.Sleep(300 * ms)
 		}
+		Sep()
 		if tutStep[0] == 1 {
-			tutStep[0]++
+			tutStep = []int{2, 0}
 		}
 	}
 }

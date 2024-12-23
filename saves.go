@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -15,14 +14,17 @@ func loadSave(name string) (int, error) {
 		Name   string `toml:"name"`
 	}
 
-	type Money struct {
-		Wallet float64 `toml:"wallet"`
-		Bank   float64 `toml:"bank"`
+	type Game struct {
+		Wallet       float64 `toml:"wallet"`
+		Bank         float64 `toml:"bank"`
+		Autosave     int     `toml:"autosave"`
+		First        bool    `toml:"first"`
+		TutorialStep []int   `toml:"tutorialStep"`
 	}
 
 	type SaveData struct {
 		Player Player `toml:"player"`
-		Money  Money  `toml:"money"`
+		Game   Game   `toml:"game"`
 	}
 
 	defaultSave := SaveData{
@@ -32,9 +34,12 @@ func loadSave(name string) (int, error) {
 			Town:   "_",
 			Name:   "_",
 		},
-		Money: Money{
-			Wallet: 0,
-			Bank:   1000,
+		Game: Game{
+			Wallet:       0,
+			Bank:         1000,
+			Autosave:     -1,
+			First:        false,
+			TutorialStep: []int{1, 0},
 		},
 	}
 
@@ -68,22 +73,26 @@ func loadSave(name string) (int, error) {
 		hungry = defaultSave.Player.Hungry
 		PLACE = defaultSave.Player.Place
 		TOWN = defaultSave.Player.Town
-		wallet = defaultSave.Money.Wallet
-		bank = defaultSave.Money.Bank
 		NAME = defaultSave.Player.Name
+		wallet = defaultSave.Game.Wallet
+		bank = defaultSave.Game.Bank
+		autosave = defaultSave.Game.Autosave
+		first = defaultSave.Game.First
+		tutStep = defaultSave.Game.TutorialStep
 		/* DEFAULT */
 
 		// Return exit code 1 (file did not exist and was created with default values)
 		return 1, nil
 	}
 
-	// Validate loaded data
+	/****************** VALIDATE *****************8*/
 	if save.Player.Hungry < 1 || save.Player.Hungry > 100 || save.Player.Place == "" || save.Player.Town == "" ||
-		save.Player.Name == "" || save.Money.Wallet < 0 || save.Money.Bank < 0 {
-		// Invalid structure or missing values, reset to default
+		save.Player.Name == "" || save.Game.Wallet < 0 || save.Game.Bank < 0 || save.Game.Autosave < -1 ||
+		len(save.Game.TutorialStep) != 2 {
+
 		file, err := os.Create(filePath)
 		if err != nil {
-			return 2, err // Error while resetting the save file
+			return 2, err
 		}
 		defer func() {
 			err := file.Close()
@@ -91,20 +100,24 @@ func loadSave(name string) (int, error) {
 				panic(err)
 			}
 		}()
+		/****************** VALIDATE *****************8*/
 
 		err = toml.NewEncoder(file).Encode(defaultSave)
 		if err != nil {
-			return 2, err // Error while writing default save
+			return 2, err
 		}
 
-		/* DEFAULT */
+		/************* DEFAULT ***************/
 		hungry = defaultSave.Player.Hungry
 		PLACE = defaultSave.Player.Place
 		TOWN = defaultSave.Player.Town
-		wallet = defaultSave.Money.Wallet
-		bank = defaultSave.Money.Bank
 		NAME = defaultSave.Player.Name
-		/* DEFAULT */
+		wallet = defaultSave.Game.Wallet
+		bank = defaultSave.Game.Bank
+		autosave = defaultSave.Game.Autosave
+		first = defaultSave.Game.First
+		tutStep = defaultSave.Game.TutorialStep
+		/**************** DEFAULT ***************/
 
 		// Return exit code 2 (invalid structure, reset file to defaults)
 		return 2, nil
@@ -113,15 +126,60 @@ func loadSave(name string) (int, error) {
 	hungry = save.Player.Hungry
 	PLACE = save.Player.Place
 	TOWN = save.Player.Town
-	wallet = save.Money.Wallet
-	bank = save.Money.Bank
 	NAME = save.Player.Name
+	wallet = save.Game.Wallet
+	bank = save.Game.Bank
+	autosave = save.Game.Autosave
+	first = save.Game.First
+	tutStep = save.Game.TutorialStep
 
 	return 0, nil
 }
 
 func saveSave(name string) error {
-	// PATH
+	/****** STRUCTS ******/
+	type Player struct {
+		Hungry int    `toml:"hungry"`
+		Place  string `toml:"place"`
+		Town   string `toml:"town"`
+		Name   string `toml:"name"`
+	}
+
+	/****** STRUCTS ******/
+	type Game struct {
+		Wallet       float64 `toml:"wallet"`
+		Bank         float64 `toml:"bank"`
+		Autosave     int     `toml:"autosave"`
+		First        bool    `toml:"first"`
+		TutorialStep []int   `toml:"tutorialStep"`
+	}
+
+	/****** STRUCTS ******/
+	type SaveData struct {
+		Player Player `toml:"player"`
+		Game   Game   `toml:"game"`
+	}
+
+	/****** STRUCTS ******/
+
+	/****** DATA ******/
+	saveData := SaveData{
+		Player: Player{
+			Hungry: hungry,
+			Place:  PLACE,
+			Town:   TOWN,
+			Name:   NAME,
+		},
+		Game: Game{
+			Wallet:       wallet,
+			Bank:         bank,
+			Autosave:     autosave,
+			First:        first,
+			TutorialStep: tutStep,
+		},
+	}
+	/****** DATA ******/
+
 	filePath := "saves/" + name + ".toml"
 
 	err := os.MkdirAll("saves", 0755)
@@ -140,19 +198,8 @@ func saveSave(name string) error {
 		}
 	}()
 
-	// formating data
-	content := fmt.Sprintf(`[player]
-hungry = %d
-place = "%s"
-town = "%s"
-name = "%s"
-
-[money]
-wallet = %.2f
-bank = %.2f
-`, hungry, PLACE, TOWN, NAME, wallet, bank)
-
-	_, err = file.WriteString(content)
+	encoder := toml.NewEncoder(file)
+	err = encoder.Encode(saveData)
 	if err != nil {
 		return err
 	}

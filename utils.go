@@ -6,6 +6,7 @@ import (
 	"golang.org/x/term"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -184,7 +185,11 @@ func loading(secs int, prompt string) {
 }
 
 func lenr(txt string) int {
-	return utf8.RuneCountInString(txt)
+	ansiRegex := regexp.MustCompile(`\033\[[0-9;]*[a-zA-Z]`)
+
+	cleanTxt := ansiRegex.ReplaceAllString(txt, "")
+
+	return utf8.RuneCountInString(cleanTxt)
 }
 
 func goTo(place string) {
@@ -273,10 +278,20 @@ func hungryAdd(num int) {
 	}
 }
 
-func Talk(msgs [][2]string, colors map[string]string) {
+func Talk(msgs [][2]interface{}, colors map[string]string) {
 	for _, msg := range msgs {
+		message := func() string {
+			if fn, ok := msg[1].(func() string); ok {
+				return fn()
+			}
+			if str, ok := msg[1].(string); ok {
+				return str
+			}
+			return ""
+		}()
+
 		Println(Sprintf("\r\033[1m%s[ %s ]:\033[0m %s%s\033[0m",
-			colorCodes[colors[msg[0]]], msg[0], colorCodes[colors[msg[0]]], msg[1],
+			colorCodes[colors[msg[0].(string)]], msg[0], colorCodes[colors[msg[0].(string)]], message,
 		))
 		r := bufio.NewReader(os.Stdin)
 		Print("\033[30;47mDalej >\033[0m")
