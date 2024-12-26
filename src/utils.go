@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"golang.org/x/term"
+	"math/rand"
 	"os"
 	"os/exec"
 	"regexp"
@@ -138,6 +139,9 @@ func PrintC(txt string) {
 }
 
 func Prompt(t string) string {
+	if t == ">>> " {
+		t = "\033[1;32m>>>\033[0m \033[38;2;180;255;200m"
+	}
 	setState(true)
 	width, height := getTerminalSize()
 
@@ -167,6 +171,7 @@ func Prompt(t string) string {
 	posY += 1
 
 	setState(false)
+	Print("\033[0m")
 	return strings.TrimSpace(input)
 }
 
@@ -215,6 +220,10 @@ func goTo(place string) {
 		PLACE = "BANK"
 		chm("BANK")
 		handleBank()
+	case "KASYNO":
+		PLACE = "KASYNO"
+		chm("KASYNO")
+		handleKasyno()
 	default:
 		Println("Nieznana lokalizacja")
 		Println("Wygląda na to, że save nie był poprawny! Nie powinno się ręcznie modefikować plików save!")
@@ -297,4 +306,37 @@ func Talk(msgs [][2]interface{}, colors map[string]string) {
 		Print("\033[30;47mDalej >\033[0m")
 		r.ReadString('\n')
 	}
+}
+
+func commands(cmds ...string) {
+	for i, cmd := range cmds {
+		PrintC(Sprintf("%d. %s", i+1, cmd))
+	}
+}
+
+func randint[ints interface {
+	~int | ~int64 | ~int32 | ~int16 | ~int8
+}](min ints, max ints) int {
+	minInt := int(min)
+	maxInt := int(max)
+
+	if minInt > maxInt {
+		minInt, maxInt = maxInt, minInt
+	}
+	return rand.Intn(maxInt-minInt+1) + minInt
+}
+
+func Printf(format string, a ...interface{}) {
+	fmt.Printf(format, a...)
+}
+
+func Printfln(format string, a ...interface{}) {
+	Println(Sprintf(format, a...))
+}
+
+func dalej() {
+	r := bufio.NewReader(os.Stdin)
+	Print("\033[30;47mDalej >\033[0m")
+	r.ReadString('\n')
+	Print("\r")
 }

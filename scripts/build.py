@@ -81,8 +81,8 @@ check()
 if sys == "Linux" or sys == "Darwin":
     try:
         cmd = sp.Popen([
-            "go", "build", "-o", "bin/JUAMP-X"
-        ])
+            "go", "build", "-o", "../bin/JUAMP-X"
+        ], cwd='src')
     except Exception as err:
         print(f"\033[1;31mError!\033[0;91m Compilation not successful! make sure you have installed all dependencies\033[3m - ErrorCode: {err}\033[0;0m")
         os.exit(249)
@@ -94,8 +94,8 @@ pass
 if sys == "Windows":
     try:
         cmd = sp.Popen([
-            "go", "build", "-o", "bin/JUAMP-X.exe"
-        ])
+            "go", "build", "-o", "..\\bin\\JUAMP-X.exe"
+        ], cwd='src')
     except Exception as err:
         print(f"Compilation not successful! make sure you have installed all dependencies - ErrorCode: {err}")
         os.exit(305)

@@ -7,11 +7,15 @@ import (
 )
 
 func handleRopucha() {
-	// Powitanie i instrukcja
-	Tell("Kasjer", "Witaj w najlepszym sklepie w całej dzielnicy!")
-	Tell("Kasjer", "Co podać?")
+	Talk([][2]interface{}{
+		{"Kasjer", "Witaj w najlepszym sklepie w całej dzielnicy!"},
+		{"Kasjer", "Co podać?"},
+		{"Ty", "Hm..."},
+	}, map[string]string{
+		"Kasjer": "magenta",
+		"Ty":     "green",
+	})
 
-	// Funkcja do wyświetlania listy produktów
 	list := func() {
 		PrintLine("Dostępne produkty:")
 		for name, info := range products {
@@ -27,7 +31,6 @@ func handleRopucha() {
 		Sep()
 	}
 
-	// Wyświetlenie dostępnych opcji
 	Println("Możesz uzyskać więcej info o danym przedmiocie wpisując `info {nazwa przedmiotu}`, ")
 	Println("lub zakupić przedmiot wpisując `buy {nazwa przedmiotu}`. możesz też wpisać `list`, aby ponownie wyświetlić listę produktów")
 	Println("Wpisz `exit`, aby wyjść ze sklepu")

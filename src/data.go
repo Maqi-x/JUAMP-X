@@ -19,6 +19,7 @@ var autosave int = -1
 var first bool = true
 var history []string
 var tutStep []int = []int{1, 0}
+var age int = 18
 
 // ------------------------------ inputs handle --------------------------- \\
 

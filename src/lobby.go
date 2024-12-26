@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -11,13 +13,18 @@ func formatStep(step []int) string {
 }
 
 func handleLobby() {
-	if !first && tutStep[0] == 1 {
-		o := Prompt("Rozpocznie się samouczek, jeśli chcesz go pominąć wpisz \"skip\", inaczej poprostu naciśnij enter")
+	fmt.Printf("\033[%d;1H", posY)
+	if !first && tutStep[0] == 1 && tutStep[1] == 0 {
+		r := bufio.NewReader(os.Stdin)
+		Print("\033[1m<Rozpocznie się samouczek, jeśli chcesz go pominąć wpisz \"skip\", inaczej poprostu naciśnij enter>\033[0m")
+		o, _ := r.ReadString('\n')
+		fmt.Print("\033[A\033[2K")
 		if o == "skip" {
 			first = true
 		}
 	}
 	if !first {
+		Print("\r\033[A\033[2K")
 		PrintLine("Samouczek")
 		//Println(Sprintf("DEBUG: %v", tutStep))
 		//Println(Sprintf("DEBUG: %s", formatStep(tutStep)))
@@ -102,30 +109,28 @@ func handleLobby() {
 		Sep()
 	}
 	Println("Co chcesz teraz zrobić?")
-	PrintC("1. wyjdź na dwór")
-	PrintC("2. Konfiguracja")
-	PrintC("3. Wyjdź z gry")
+	commands("Wyjdź na dwór", "Konfiguracja", "Wyjdź z gry")
 	inp := Prompt(">>> ")
-	switch inp {
-	case "1":
-		goTo("DWÓR")
-	case "2":
-		goTo("CONFIG")
-	case "3":
-		Exit()
-	default:
-		PrintClr("Error!", "orange")
-		PrintClr("Nieznana opcja", "red")
+	for {
+		switch inp {
+		case "1":
+			goTo("DWÓR")
+		case "2":
+			goTo("CONFIG")
+		case "3":
+			Exit()
+		default:
+			PrintClr("Error!", "orange")
+			PrintClr("Nieznana opcja", "red")
+			continue
+		}
 	}
 }
 
 func HandleOutside() {
 	Println("Piękny zapach świeżego powietrza nie prawdasz?")
 	for {
-		PrintC("1. Udaj się do małego sklepu \"Ropucha\"")
-		PrintC("2. Zagadaj do kogoś")
-		PrintC("3. Zajdź do banku")
-		PrintC("4. Powrót do domu")
+		commands("Udaj się do małego sklepu \"Ropucha\"", "Zagadaj do kogoś", "Zajdź do banku", "Idź do kasyna", "Powrót do domu")
 		inp := Prompt(">>> ")
 		switch inp {
 		case "1":
@@ -135,6 +140,8 @@ func HandleOutside() {
 		case "3":
 			goTo("BANK")
 		case "4":
+			goTo("KASYNO")
+		case "5":
 			goTo("DOM")
 		default:
 			PrintClr("Error!", "orange")
