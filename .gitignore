@@ -36,3 +36,4 @@ JUAMP-X Windows
 JUAMP-X Linux
 bin/
 /global-settings.toml
+/.idea.
