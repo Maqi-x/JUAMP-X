@@ -26,8 +26,8 @@ func handleLobby() {
 	if !first {
 		Print("\r\033[A\033[2K")
 		PrintLine("Samouczek")
-		//Println(Sprintf("DEBUG: %v", tutStep))
-		//Println(Sprintf("DEBUG: %s", formatStep(tutStep)))
+		debug(tutStep)
+		debug(formatStep(tutStep))
 		switch formatStep(tutStep) {
 		case "1,0":
 			Talk([][2]interface{}{
@@ -38,8 +38,7 @@ func handleLobby() {
 				"Mama": "yellow",
 				"Ty":   "green",
 			})
-			PrintClr("\033[1mPorada:", "blue")
-			PrintClr("Udaj się na dwór, tam znajduje się mały sklepik w którym możesz zakupić gazety", "blue")
+			tip("Udaj się na dwór, tam znajduje się mały sklepik w którym możesz zakupić gazety")
 			tutStep = []int{1, 1}
 		case "1,1", "1,2", "1,3":
 			Talk([][2]interface{}{
@@ -70,8 +69,7 @@ func handleLobby() {
 			time.Sleep(1000 * ms)
 			Println("\033[1;32m+ Dodano 200zł\033[0m")
 			walletAdd(200)
-			PrintClr("\033[1mPorada:", "blue")
-			PrintClr("Udaj się na dwór, tam znajduje się bank - w którym możesz wpłacić pieniądze", "blue")
+			tip("Udaj się na dwór, tam znajduje się bank - w którym możesz wpłacić pieniądze")
 		case "2,1", "2,2", "2,3":
 			Talk([][2]interface{}{
 				{"Mama", "Halo? dlaczego nie wpłaciłeś tych pierzonych pieniędzy??"},
@@ -86,7 +84,7 @@ func handleLobby() {
 						} else if inp == "2" {
 							return "Przepraszam, ale nie mogę"
 						} else {
-							Println("Niepoprawna opcja")
+							ShowError("Niepoprawna opcja")
 							continue
 						}
 					}
@@ -109,20 +107,35 @@ func handleLobby() {
 		Sep()
 	}
 	Println("Co chcesz teraz zrobić?")
-	commands("Wyjdź na dwór", "Konfiguracja", "Wyjdź z gry")
-	inp := Prompt(">>> ")
-	for {
-		switch inp {
-		case "1":
-			goTo("DWÓR")
-		case "2":
-			goTo("CONFIG")
-		case "3":
-			Exit()
-		default:
-			PrintClr("Error!", "orange")
-			PrintClr("Nieznana opcja", "red")
-			continue
+	if !tmpses {
+		commands("Wyjdź na dwór", "Konfiguracja", "Wyjdź z gry")
+		for {
+			inp := Prompt(">>> ")
+			switch inp {
+			case "1":
+				goTo("DWÓR")
+			case "2":
+				goTo("CONFIG")
+			case "3":
+				Exit()
+			default:
+				ShowError("Nieznana opcja!")
+				continue
+			}
+		}
+	} else {
+		commands("Wyjdź na dwór", "Wyjdź z gry")
+		for {
+			inp := Prompt(">>> ")
+			switch inp {
+			case "1":
+				goTo("DWÓR")
+			case "2":
+				Exit()
+			default:
+				ShowError("Nieznana opcja!")
+				continue
+			}
 		}
 	}
 }
@@ -136,7 +149,13 @@ func HandleOutside() {
 		case "1":
 			goTo("ROPUCHA")
 		case "2":
-			// not inplemented
+			Talk(randTalk().([][2]interface{}), map[string]string{
+				"Mama":     "yellow",
+				"Obsługa":  "magenta",
+				"Bezdomny": "brown",
+				"Kupier":   "blue",
+				"Ty":       "green",
+			})
 		case "3":
 			goTo("BANK")
 		case "4":

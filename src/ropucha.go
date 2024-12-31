@@ -20,7 +20,7 @@ func handleRopucha() {
 		PrintLine("Dostępne produkty:")
 		for name, info := range products {
 			price := info.Price
-			Println(Sprintf("%.2f - %s: %s", price, name, func() string {
+			PrintColor(Sprintf("%.2f - <bold>%s</bold>: %s", price, name, func() string {
 				if price < wallet {
 					return colorCodes["green"] + "✔" + colorCodes["reset"]
 				} else {
@@ -31,9 +31,15 @@ func handleRopucha() {
 		Sep()
 	}
 
-	Println("Możesz uzyskać więcej info o danym przedmiocie wpisując `info {nazwa przedmiotu}`, ")
-	Println("lub zakupić przedmiot wpisując `buy {nazwa przedmiotu}`. możesz też wpisać `list`, aby ponownie wyświetlić listę produktów")
-	Println("Wpisz `exit`, aby wyjść ze sklepu")
+	help := func() {
+		PrintS("Komendy:")
+		PrintColor("<bold>info {nazwa przedmiotu}</bold> - wyświetla informacje o przedmiocie")
+		PrintColor("<bold>list</bold> - wyświetla liste dostępnych przedmiotów, wraz z cenami")
+		PrintColor("<bold>buy {nazwa przedmiotu}</bold> - kupuje przedmiot")
+		PrintColor("<bold>help</bold> - wyświetla pomoc")
+		PrintColor("<x><bold>exit</bold></x> - opuszcza sklep")
+	}
+	help()
 
 	products = make(map[string]struct {
 		Price       float64
@@ -46,29 +52,42 @@ func handleRopucha() {
 	for {
 		inp := Prompt(">>> ")
 
-		if inp == "list" {
+		if inp == "help" {
+			help()
+		} else if inp == "list" {
 			list()
 			continue
 		} else if inp == "exit" {
 			break
 		} else if strings.HasPrefix(inp, "info") {
 			if len(inp) < 6 {
-				Println("Podaj prawidłową nazwę przedmiotu po komendzie `info`")
+				Talk([][2]interface{}{
+					{"Kasjer", "Podaj nazwe przedmiotu po komendzie `info`, a chętnie powiem ci o nim więcej"},
+				}, map[string]string{
+					"Kasjer": "magenta",
+				})
+				Println("\r")
 				continue
 			}
 
 			key := normStr(strings.TrimSpace(inp[5:]))
 			v, exists := products[key]
 			if !exists {
-				Println("Nie ma takiego przedmiotu!")
+				Talk([][2]interface{}{
+					{"Kasjer", "Nie ma takiego przedmiotu!"},
+					{"Kasjer", "Uzyj `list` by wyświetlić dostępne przedmioty"},
+				}, map[string]string{
+					"Kasjer": "magenta",
+				})
+				Println("\r")
 				continue
 			}
 			if key == "gazeta" {
 				v.Description = Sprintf(v.Description, TOWN)
 			}
-			PrintClr(Sprintf("Info o przedmiocie: %s", key), "cyan")
-			PrintClr(Sprintf("Opis: %s", v.Description), "cyan")
-			PrintClr(Sprintf("Cena: %.2f", v.Price), "cyan")
+			PrintColor(Sprintf("<x><bold>Info o przedmiocie:</x></bold> %s", key))
+			PrintColor(Sprintf("<x><bold>Opis:</x></bold> %s", v.Description))
+			PrintColor(Sprintf("<x><bold>Cena:</x></bold> %.2f", v.Price))
 		} else if strings.HasPrefix(inp, "buy") {
 			if len(inp) < 5 {
 				Println("Podaj prawidłową nazwę przedmiotu po komendzie `buy`")
@@ -87,11 +106,30 @@ func handleRopucha() {
 				Println("Wygląda na to, że nie stać cię na ten produkt...")
 				Println("Spróbuj ponownie później")
 				if bank > v.Price {
-					PrintClr("\033[1mWskazówka:", "blue")
-					PrintClr("W banku masz wystarczającą ilość pieniędzy, by zakupić ten produkt!", "blue")
-					PrintClr("Możesz udać się do banku i wypłacić pieniądze, a następnie tu wrócić", "blue")
+					PrintS("Wskazówka:")
+					PrintColor("W <bold>banku</bold> masz wystarczającą ilość pieniędzy, by zakupić ten produkt!")
+					PrintColor("Możesz udać się do banku i <bold>wypłacić</bold> pieniądze, a następnie tu wrócić")
 				}
 			} else {
+				if key == "gazeta" && assortment["newspapers"] > 0 {
+					assortment["newspapers"]--
+				} else if key == "bułka" && assortment["buns"] > 0 {
+					assortment["buns"]--
+				} else if key == "pizza" && assortment["pizzas"] > 0 {
+					assortment["pizzas"]--
+				} else if key == "buty" && assortment["shoes"] > 0 {
+					assortment["shoes"]--
+				} else {
+					Talk([][2]interface{}{
+						{"Kasjer", "Przykro mi, ale ten produkt już się wyprzedał. Musisz poczekać do dostaw"},
+						{"Ty", "Niestety..."},
+					}, map[string]string{
+						"Kasjer": "magenta",
+						"Ty":     "green",
+					})
+					Println()
+					continue
+				}
 				buy(key)
 			}
 		} else {

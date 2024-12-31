@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,7 +16,7 @@ func handleKasyno() {
 		var odp bool
 		Talk([][2]interface{}{
 			{"Obsługa", "Co ty tu robisz gówniarzu??"},
-			{"Obsługa", "To nie miejsce dla dzieci, wypier*alaj!"},
+			{"Obsługa", "To nie miejsce dla dzieci, wypier*alaj!"}, // lmao
 			{"Ty", func() string {
 				commands("Przepraszam, już idę", "Słucham??")
 				for {
@@ -35,11 +37,11 @@ func handleKasyno() {
 			"Obsługa": "magenta",
 			"Ty":      "green",
 		})
-		loading(1, "")
 		if odp {
 			PrintClr("Zostałeś wyjebany z kasyna 😇", "red")
 		}
-		time.Sleep(1 * sec)
+		loading(1, "")
+		Back()
 	} else {
 		Talk([][2]interface{}{
 			{"Obsługa", "Witamy ponownie!"},
@@ -57,7 +59,7 @@ func handleKasyno() {
 			case "1":
 				handleRuletka()
 			case "2":
-				//handleBj()
+				handleBj()
 			case "3":
 				Back()
 			default:
@@ -67,8 +69,6 @@ func handleKasyno() {
 			chm("KASYNO")
 		}
 	}
-
-	Back()
 }
 
 func handleRuletka() {
@@ -77,25 +77,24 @@ func handleRuletka() {
 		{"Kupier", "Witaj ponownie!"},
 		{"Kupier", "To za ile dziś gramy?"},
 		{"Ty", func() string {
-			Println("Wpisz liczbe zł, exit aby uciec jak nie masz kasy xdd")
+			Println("Podaj liczbe złotych lub exit aby wyjść")
 			for {
 				inp := Prompt(">>> ")
 				if inp == "exit" {
 					Back()
 				}
-				if _, err := strconv.ParseFloat(inp, 64); err == nil {
+				if idk, err := strconv.ParseFloat(inp, 64); err == nil && idk > 0 {
 					if wallet >= func() float64 {
-						idk, _ := strconv.ParseFloat(inp, 64)
 						c = idk
 						return idk
 					}() {
 						return inp
 					} else {
-						Println("Nie masz wystaraczającej ilości pieniędzy w portfelu")
+						ShowError("Nie masz wystaraczającej ilości pieniędzy w portfelu")
 						continue
 					}
 				} else {
-					Println("Niepoprawna liczba")
+					ShowError("Niepoprawna liczba")
 					continue
 				}
 			}
@@ -264,4 +263,263 @@ func genColors() []int {
 	}
 
 	return colors
+}
+
+// ----------------------------------------------------- BLACK JACK ----------------------------------------------- \\
+type Card struct {
+	Suit  string
+	Value string
+}
+
+// Predefined deck values and suits
+var suits = []string{"Hearts", "Diamonds", "Clubs", "Spades"}
+var values = []string{"2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King", "Ace"}
+var deck []Card
+
+// InitializeDeck creates and returns a full deck of cards
+func InitializeDeck() []Card {
+	deck := []Card{}
+	for _, suit := range suits {
+		for _, value := range values {
+			deck = append(deck, Card{Suit: suit, Value: value})
+		}
+	}
+	return deck
+}
+
+func ShuffleDeck(deck []Card) []Card {
+	shuffledDeck := make([]Card, len(deck))
+	perm := rand.Perm(len(deck))
+	for i, v := range perm {
+		shuffledDeck[v] = deck[i]
+	}
+	return shuffledDeck
+}
+
+func GetCardValue(card Card) int {
+	switch card.Value {
+	case "Ace":
+		return 11
+	case "King", "Queen", "Jack":
+		return 10
+	default:
+		var value int
+		fmt.Sscanf(card.Value, "%d", &value)
+		return value
+	}
+}
+
+// CalcHand int calculates the total value of a hand
+func CalcHand(hand []Card) int {
+	var aces, total int
+
+	for _, card := range hand {
+		value := GetCardValue(card)
+		if card.Value == "Ace" {
+			aces++
+		}
+		total += value
+	}
+
+	for total > 21 && aces > 0 {
+		total -= 10
+		aces--
+	}
+
+	return total
+}
+
+func handleBj() {
+	var c float64
+	Talk([][2]interface{}{
+		{"Kupier", "Witaj ponownie!"},
+		{"Kupier", "Ile stawiasz?"},
+		{"Ty", func() string {
+			Println("Wpisz liczbe zł, exit aby uciec jak nie masz kasy xdd")
+			for {
+				inp := Prompt(">>> ")
+				if inp == "exit" {
+					Back()
+				}
+				if idk, err := strconv.ParseFloat(inp, 64); err == nil && idk > 0 {
+					if wallet >= func() float64 {
+						c = idk
+						return idk
+					}() {
+						return inp
+					} else {
+						Println("Nie masz wystaraczającej ilości pieniędzy w portfelu")
+						continue
+					}
+				} else {
+					Println("Niepoprawna liczba")
+					continue
+				}
+			}
+		}},
+		{"Kupier", "No to zaczynamy"},
+	}, map[string]string{
+		"Kupier": "bright_blue",
+		"Ty":     "green",
+	})
+	chm("BLACKJACK")
+	win := BjGame()
+	chm("KASYNO")
+	if win == 1 {
+		Print(colorCodes["green"])
+		PrintLine("Nagroda")
+		loading(1, "")
+		Printfln("%.2f zł", c*2)
+		walletAdd(float64(c * 2))
+	} else if win == 0 {
+		Print(colorCodes["red"])
+		PrintLine("Strata")
+		loading(1, "")
+		Printfln("%.2f zł", c)
+		walletD(float64(c))
+	} else {
+		Print(colorCodes["blue"])
+		Println("Remis, nic nie otrzymujesz")
+	}
+	Print(colorCodes["reset"])
+	dalej()
+}
+
+func BjGame() int {
+	ctostr := func(hand []Card) string {
+		var a string
+		for i, card := range hand {
+			if i == 0 {
+				continue
+			}
+			a += ", " + card.Value
+		}
+		return hand[0].Value + a
+	}
+	inf := func(clr string, playerHand []Card, playerValue int, dealerHand []Card, dealerValue int) {
+		Printfln("%s\033[1m", colorCodes[clr])
+		PrintLine("Wyniki:")
+		Printfln("\033[1mTwoje karty:\033[22m %s, \033[1mWartość:\033[22m %d", ctostr(playerHand), playerValue)
+		Printfln("\033[1mKarty krupiera:\033[22m %s, \033[1mWartość: %d\033[0m", ctostr(dealerHand), dealerValue)
+		dalej()
+	}
+	deck := ShuffleDeck(InitializeDeck())
+
+	var playerHand, dealerHand []Card
+	playerHand = append(playerHand, deck[0], deck[1])
+	dealerHand = append(dealerHand, deck[2], deck[3])
+	deck = deck[4:]
+
+	for {
+		playerPassed := false
+		dealerPassed := false
+
+		// Tura gracza
+		playerValue := CalcHand(playerHand)
+		Println("")
+		PrintColor("<bold>Twoje karty:</bold>", ctostr(playerHand))
+		PrintColor("<bold>Wartość twojej ręki:</bold>", playerValue)
+		PrintColor("<bold>Karta krupiera:</bold>", ctostr(dealerHand))
+		PrintColor("<bold>Wartość twojej ręki:</bold>", CalcHand(dealerHand))
+
+		if playerValue > 21 {
+			Println("Przegrałeś - przekroczyłeś 21!")
+			inf("red", playerHand, playerValue, dealerHand, CalcHand(dealerHand))
+			return 0
+		}
+
+		Println("Co chcesz zrobić? (h)it / (p)ass")
+		move := Prompt(">>> ")
+
+		if move == "h" || move == "hit" {
+			playerHand = append(playerHand, deck[0])
+			deck = deck[1:]
+		} else if move == "p" || move == "pass" {
+			playerPassed = true
+		} else {
+			Println("Niepoprawna opcja.")
+			continue
+		}
+
+		Println("")
+		Println("Karty krupiera:", ctostr(dealerHand))
+		Println("Wartość ręki krupiera:", CalcHand(dealerHand))
+
+		if dealerShouldDraw(dealerHand) {
+			loading(1, "Krupier dobiera kartę")
+			dealerHand = append(dealerHand, deck[0])
+			deck = deck[1:]
+		} else {
+			Println("Krupier postanowił zostać (pass).")
+			dealerPassed = true
+		}
+
+		if CalcHand(dealerHand) > 21 {
+			Println("Wygrałeś - dealer przekroczył 21!")
+			inf("red", playerHand, playerValue, dealerHand, CalcHand(dealerHand))
+			return 0
+		}
+
+		if playerPassed && dealerPassed {
+			Println("Obaj gracze postanowili zpassować. Gra skończona!")
+			break
+		}
+	}
+
+	playerValue := CalcHand(playerHand)
+	dealerValue := CalcHand(dealerHand)
+
+	var clr string
+	var win int
+
+	if playerValue == 21 && dealerValue != 21 {
+		clr = "green"
+		PrintClr("Wygrałeś!", clr)
+		win = 1
+	} else if dealerValue == 21 && playerValue != 21 {
+		clr = "red"
+		PrintClr("Przegrałeś!", clr)
+		win = 0
+	} else if dealerValue > 21 || playerValue > dealerValue {
+		clr = "green"
+		PrintClr("Wygrałeś!", clr)
+		win = 1
+	} else if playerValue < dealerValue {
+		clr = "red"
+		win = 0
+		PrintClr("Przegrałeś!", clr)
+	} else {
+		win = -1
+		clr = "blue"
+		PrintClr("Remis!", clr)
+	}
+	inf(clr, playerHand, playerValue, dealerHand, CalcHand(dealerHand))
+	return win
+}
+
+func dealerShouldDraw(dealerHand []Card) bool {
+	dealerValue := CalcHand(dealerHand)
+
+	if dealerValue >= 17 {
+		return false
+	}
+
+	var riskFactor float64
+	switch {
+	case dealerValue <= 11:
+		riskFactor = 1
+	case dealerValue == 12:
+		riskFactor = 0.85
+	case dealerValue == 13:
+		riskFactor = 0.70
+	case dealerValue == 14:
+		riskFactor = 0.55
+	case dealerValue == 15:
+		riskFactor = 0.40
+	case dealerValue == 16:
+		riskFactor = 0.25
+	}
+
+	riskFactor += rand.Float64() * 0.1
+	return rand.Float64() < riskFactor
 }

@@ -64,12 +64,14 @@ func handleBank() {
 		"Bankier": "magenta",
 		"Ty":      "green",
 	})
-	Println("")
+	Println("\r")
 	help := func() {
-		Println("Aby wypłacić pieniądze z banku wpisz \"- {liczba do wypłaty}\"")
-		Println("Jeśli chcesz zaś wpłacić pieniądze...: \"+ {liczba do wypłaty}\"")
-		Println("\"exit\" aby wyjść lub \"help\" aby uzyskać pomoc")
-		Println("\"info\" - wyświetli aktualny stan konta")
+		PrintS("Info")
+		PrintColor("<bold>- {kwota}</bold> - wypłaca pieniądze z banku")
+		PrintColor("<bold>+ {kwota}</bold> - wpłaca pieniądze do banku")
+		PrintColor("<bold>help</bold> - wyświetla pomoc")
+		PrintColor("<bold>info</bold> - wyświetla aktualny stan portfela i banku")
+		PrintColor("<bold><x>exit</x></bold> - opuszcza bank")
 	}
 	help()
 	for {
@@ -82,10 +84,10 @@ func handleBank() {
 			}
 			err = cWithdraw(float64(x))
 			if err != nil {
-				Println(err.Error())
+				ShowError(err.Error())
 				continue
 			}
-			Println("Pomyślnie wypłacono kwote " + strconv.Itoa(x) + "zł")
+			PrintS("Pomyślnie wypłacono kwote " + strconv.Itoa(x) + "zł")
 		} else if strings.HasPrefix(inp, "+") {
 			x, err := strconv.Atoi(strings.TrimSpace(inp[1:]))
 			if err != nil {
@@ -94,10 +96,10 @@ func handleBank() {
 			}
 			err = cDeposit(float64(x))
 			if err != nil {
-				Println(err.Error())
+				ShowError(err.Error())
 				continue
 			}
-			Println("Pomyślnie wpłacono kwote " + strconv.Itoa(x) + "zł do banku")
+			PrintS("Pomyślnie wpłacono kwote " + strconv.Itoa(x) + "zł do banku")
 			if x >= 200 {
 				if tutStep[0] == 2 {
 					tutStep = []int{3, 0}
@@ -108,8 +110,8 @@ func handleBank() {
 		} else if inp == "exit" {
 			break
 		} else if inp == "info" {
-			Println("Portfel: " + strconv.FormatFloat(wallet, 'f', 2, 64) + "zł")
-			Println("Bank: " + strconv.FormatFloat(bank, 'f', 2, 64) + "zł")
+			PrintColor("<bold><x>Portfel:</bold></x> " + strconv.FormatFloat(wallet, 'f', 2, 64) + "zł")
+			PrintColor("<bold><x>Bank:</bold></x> " + strconv.FormatFloat(bank, 'f', 2, 64) + "zł")
 		}
 	}
 	Back()

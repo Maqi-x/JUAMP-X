@@ -5,7 +5,7 @@ Inspiration: [JUAMP](https://github.com/gorciu-official/JUAMP)
 
 
 > By **@Maqi-X**
-> Current version: **Beta@5**
+> Current version: **Beta@6**
 > License: [GNU General Public License (GPL)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 
@@ -19,5 +19,11 @@ Inspiracja: [JUAMP](https://github.com/gorciu-official/JUAMP)
 
 
 > Autor: **@Maqi-X**
-> Aktualna wersja: **Beta@5**
+> Aktualna wersja: **Beta@6**
 > Licencja: [GNU General Public License (GPL)](https://www.gnu.org/licenses/gpl-3.0.html)
+
+
+
+
+---
+## For contribution information, check out [concributing.md](https://github.com/Maqi-x/JUAMP-X/blob/main/concributing.md)

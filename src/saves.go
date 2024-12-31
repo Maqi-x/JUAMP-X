@@ -6,43 +6,39 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+/****** STRUCTS ******/
+type Player struct {
+	Hungry int    `toml:"hungry"`
+	Place  string `toml:"place"`
+	Town   string `toml:"town"`
+	Name   string `toml:"name"`
+	Age    int    `toml:"age"`
+}
+
+type Game struct {
+	Wallet       float64 `toml:"wallet"`
+	Bank         float64 `toml:"bank"`
+	Autosave     int     `toml:"autosave"`
+	First        bool    `toml:"first"`
+	TutorialStep []int   `toml:"tutorialStep"`
+}
+
+type Assortment struct {
+	Buns       int `toml:"buns"`
+	Pizzas     int `toml:"pizzas"`
+	Newspapers int `toml:"newspapers"`
+	Shoes      int `toml:"shoes"`
+}
+
+type SaveData struct {
+	Player     Player     `toml:"player"`
+	Game       Game       `toml:"game"`
+	Assortment Assortment `toml:"assortment"`
+}
+
+/****** STRUCTS ******/
+
 func loadSave(name string) (int, error) {
-	type Player struct {
-		Hungry int    `toml:"hungry"`
-		Place  string `toml:"place"`
-		Town   string `toml:"town"`
-		Name   string `toml:"name"`
-	}
-
-	type Game struct {
-		Wallet       float64 `toml:"wallet"`
-		Bank         float64 `toml:"bank"`
-		Autosave     int     `toml:"autosave"`
-		First        bool    `toml:"first"`
-		TutorialStep []int   `toml:"tutorialStep"`
-	}
-
-	type SaveData struct {
-		Player Player `toml:"player"`
-		Game   Game   `toml:"game"`
-	}
-
-	defaultSave := SaveData{
-		Player: Player{
-			Hungry: 100,
-			Place:  "DOM",
-			Town:   "_",
-			Name:   "_",
-		},
-		Game: Game{
-			Wallet:       0,
-			Bank:         1000,
-			Autosave:     -1,
-			First:        false,
-			TutorialStep: []int{1, 0},
-		},
-	}
-
 	filePath := "saves/" + name + ".toml"
 	var save SaveData
 
@@ -70,15 +66,7 @@ func loadSave(name string) (int, error) {
 		}
 
 		/* DEFAULT */
-		hungry = defaultSave.Player.Hungry
-		PLACE = defaultSave.Player.Place
-		TOWN = defaultSave.Player.Town
-		NAME = defaultSave.Player.Name
-		wallet = defaultSave.Game.Wallet
-		bank = defaultSave.Game.Bank
-		autosave = defaultSave.Game.Autosave
-		first = defaultSave.Game.First
-		tutStep = defaultSave.Game.TutorialStep
+		initData()
 		/* DEFAULT */
 
 		// Return exit code 1 (file did not exist and was created with default values)
@@ -88,7 +76,8 @@ func loadSave(name string) (int, error) {
 	/****************** VALIDATE *****************8*/
 	if save.Player.Hungry < 1 || save.Player.Hungry > 100 || save.Player.Place == "" || save.Player.Town == "" ||
 		save.Player.Name == "" || save.Game.Wallet < 0 || save.Game.Bank < 0 || save.Game.Autosave < -1 ||
-		len(save.Game.TutorialStep) != 2 {
+		len(save.Game.TutorialStep) != 2 ||
+		save.Assortment.Buns < 0 || save.Assortment.Pizzas < 0 || save.Assortment.Newspapers < 0 || save.Assortment.Shoes < 0 || age < 5 {
 
 		file, err := os.Create(filePath)
 		if err != nil {
@@ -107,17 +96,7 @@ func loadSave(name string) (int, error) {
 			return 2, err
 		}
 
-		/************* DEFAULT ***************/
-		hungry = defaultSave.Player.Hungry
-		PLACE = defaultSave.Player.Place
-		TOWN = defaultSave.Player.Town
-		NAME = defaultSave.Player.Name
-		wallet = defaultSave.Game.Wallet
-		bank = defaultSave.Game.Bank
-		autosave = defaultSave.Game.Autosave
-		first = defaultSave.Game.First
-		tutStep = defaultSave.Game.TutorialStep
-		/**************** DEFAULT ***************/
+		initData()
 
 		// Return exit code 2 (invalid structure, reset file to defaults)
 		return 2, nil
@@ -132,36 +111,21 @@ func loadSave(name string) (int, error) {
 	autosave = save.Game.Autosave
 	first = save.Game.First
 	tutStep = save.Game.TutorialStep
+	age = save.Player.Age
+	assortment = map[string]int{
+		"buns":       save.Assortment.Buns,
+		"pizzas":     save.Assortment.Pizzas,
+		"newspapers": save.Assortment.Newspapers,
+		"shoes":      save.Assortment.Shoes,
+	}
 
 	return 0, nil
 }
 
 func saveSave(name string) error {
-	/****** STRUCTS ******/
-	type Player struct {
-		Hungry int    `toml:"hungry"`
-		Place  string `toml:"place"`
-		Town   string `toml:"town"`
-		Name   string `toml:"name"`
+	if tmpses {
+		return nil
 	}
-
-	/****** STRUCTS ******/
-	type Game struct {
-		Wallet       float64 `toml:"wallet"`
-		Bank         float64 `toml:"bank"`
-		Autosave     int     `toml:"autosave"`
-		First        bool    `toml:"first"`
-		TutorialStep []int   `toml:"tutorialStep"`
-	}
-
-	/****** STRUCTS ******/
-	type SaveData struct {
-		Player Player `toml:"player"`
-		Game   Game   `toml:"game"`
-	}
-
-	/****** STRUCTS ******/
-
 	/****** DATA ******/
 	saveData := SaveData{
 		Player: Player{
@@ -169,6 +133,7 @@ func saveSave(name string) error {
 			Place:  PLACE,
 			Town:   TOWN,
 			Name:   NAME,
+			Age:    age,
 		},
 		Game: Game{
 			Wallet:       wallet,
@@ -176,6 +141,12 @@ func saveSave(name string) error {
 			Autosave:     autosave,
 			First:        first,
 			TutorialStep: tutStep,
+		},
+		Assortment: Assortment{
+			Buns:       assortment["buns"],
+			Pizzas:     assortment["pizzas"],
+			Newspapers: assortment["newspapers"],
+			Shoes:      assortment["shoes"],
 		},
 	}
 	/****** DATA ******/
@@ -205,4 +176,25 @@ func saveSave(name string) error {
 	}
 
 	return nil
+}
+
+func initData() {
+	/* DEFAULT */
+	hungry = defaultSave.Player.Hungry
+	PLACE = defaultSave.Player.Place
+	TOWN = defaultSave.Player.Town
+	NAME = defaultSave.Player.Name
+	wallet = defaultSave.Game.Wallet
+	bank = defaultSave.Game.Bank
+	autosave = defaultSave.Game.Autosave
+	first = defaultSave.Game.First
+	tutStep = defaultSave.Game.TutorialStep
+	age = defaultSave.Player.Age
+	assortment = map[string]int{
+		"buns":       defaultSave.Assortment.Buns,
+		"pizzas":     defaultSave.Assortment.Pizzas,
+		"newspapers": defaultSave.Assortment.Newspapers,
+		"shoes":      defaultSave.Assortment.Shoes,
+	}
+	/* DEFAULT */
 }

@@ -35,3 +35,4 @@ binaries.tar.gz
 JUAMP-X Windows
 JUAMP-X Linux
 bin/
+/global-settings.toml
